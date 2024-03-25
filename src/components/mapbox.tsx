@@ -7,6 +7,7 @@ import Marker from "./marker";
 
 import 'mapbox-gl/dist/mapbox-gl.css'
 import { QuestData } from "@/types/QuestData";
+import CurrentMarker from "./current-marker";
 
 let singletonMapInstance: mapboxgl.Map | null = null;
 
@@ -15,9 +16,10 @@ interface MapComponentProps {
   zoomLevel?: number;
   markerPositions?: [number, number][];
   questData: QuestData;
+  currentLocation: [number, number];
 }
 
-const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, questData }) => {
+const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, questData, currentLocation }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -55,7 +57,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, 
       style={{ width: "100%" }}
     >
       {
-        singletonMapInstance && questData && 
+        singletonMapInstance && (questData && 
         questData.buildings.map((building, index) => (
           <Marker
             key={index}
@@ -63,7 +65,15 @@ const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, 
             position={[building.location.lng, building.location.lat]}
             metadata={{ places: building.places }}
           />
-        ))
+        )))
+      }
+      {
+        singletonMapInstance && (
+          <CurrentMarker
+            map={singletonMapInstance as mapboxgl.Map}
+            position={currentLocation}
+          />
+        )
       }
     </div>
   );

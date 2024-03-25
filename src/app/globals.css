@@ -35,3 +35,7 @@
 a.mapboxgl-ctrl-logo, a.mapbox-improve-map {
   display: none !important;
 }
+
+.mapboxgl-ctrl-attrib {
+  display: none !important;
+}

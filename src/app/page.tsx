@@ -4,10 +4,14 @@ import { useEffect, useState } from 'react';
 import { getQuestData } from '@/utils/getQuestData';
 import { QuestData } from '@/types/QuestData';
 import { Marker } from 'mapbox-gl';
+import Image from 'next/image';
+import StairCrusherClubLogo from '@/assets/images/staircrusherclub-logo.png';
 
 export default function Home() {
 
   const [questData, setQuestData] = useState<QuestData | null>(null);
+
+  const [currentLocation, setCurrentLocation] = useState<[number, number]>([127, 38]);
 
   const loadQuestData = async () => {
     const questId = 'fb1ba922-9ec4-4906-866c-9eeef3a91ba2'
@@ -16,10 +20,22 @@ export default function Home() {
     setQuestData(response);
   }
 
+  const getCurrentLocation = () => {
+    navigator.geolocation.getCurrentPosition((position) => {
+      setCurrentLocation([position.coords.longitude, position.coords.latitude]);
+    });
+  };
+
   useEffect(() => {
     loadQuestData();
     setInterval(loadQuestData, 5000);
   }, [])
+
+  useEffect(() => {
+    getCurrentLocation();
+    setInterval(getCurrentLocation, 5000);
+  }
+  , []);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between">
@@ -35,9 +51,13 @@ export default function Home() {
             }}
             markerPositions={questData?.buildings.map(building => [building.location.lng, building.location.lat]) || []}
             questData={questData}
+            currentLocation={currentLocation}
           />
         )
       }
+      <Image
+      className='absolute top-0 right-0 z-10'
+      src={StairCrusherClubLogo} alt="Stair Crusher Club Logo" width={100} height={100} />
     </main>
   );
 }
