@@ -3,7 +3,7 @@ interface Location {
   lat: number;
 }
 
-interface Place {
+export interface Place {
   placeId: string;
   buildingId: string;
   name: string;

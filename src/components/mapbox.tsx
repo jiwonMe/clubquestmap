@@ -1,3 +1,4 @@
+"use client"
 // src/components/MapComponent.tsx
 import React, { useEffect, useRef } from "react";
 import mapboxgl from "mapbox-gl";
@@ -5,16 +6,18 @@ import MapBoxLanguage from '@mapbox/mapbox-gl-language';
 import Marker from "./marker";
 
 import 'mapbox-gl/dist/mapbox-gl.css'
+import { QuestData } from "@/types/QuestData";
 
 let singletonMapInstance: mapboxgl.Map | null = null;
 
 interface MapComponentProps {
   centerPosition: { lng: number; lat: number };
   zoomLevel?: number;
-  markerPositions?: [number, number][]; // Optional marker position prop
+  markerPositions?: [number, number][];
+  questData: QuestData;
 }
 
-const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, markerPositions }) => {
+const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, questData }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,14 +54,17 @@ const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, 
       ref={mapContainer}
       style={{ width: "100%" }}
     >
-      {markerPositions && singletonMapInstance && (
-        markerPositions.map((position, index) => (
-          <Marker key={index}
+      {
+        singletonMapInstance && questData && 
+        questData.buildings.map((building, index) => (
+          <Marker
+            key={index}
             map={singletonMapInstance as mapboxgl.Map}
-            position={position}
+            position={[building.location.lng, building.location.lat]}
+            metadata={{ places: building.places }}
           />
         ))
-      )}
+      }
     </div>
   );
 };
