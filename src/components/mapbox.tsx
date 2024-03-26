@@ -63,7 +63,10 @@ const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, 
             key={index}
             map={singletonMapInstance as mapboxgl.Map}
             position={[building.location.lng, building.location.lat]}
-            metadata={{ places: building.places }}
+            metadata={{
+              building: building,
+              places: building.places
+            }}
           />
         )))
       }

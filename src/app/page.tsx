@@ -39,9 +39,13 @@ export default function Home() {
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between">
-      <h1 className='absolute top-4 left-4 z-10 font-sans font-semibold text-2xl text-gray-700'>
-        {questData ? questData?.name : 'Loading...'}
-      </h1>
+      <div
+        className="relative w-full h-12 bg-blue-600 flex items-center px-4"
+      >
+        <h1 className=' text-white font-medium'>
+          {questData ? questData?.name : 'Loading...'}
+        </h1>
+      </div>
       {
         questData && (
           <MapboxMapComponent
@@ -55,9 +59,6 @@ export default function Home() {
           />
         )
       }
-      <Image
-      className='absolute top-0 right-0 z-10'
-      src={StairCrusherClubLogo} alt="Stair Crusher Club Logo" width={100} height={100} />
     </main>
   );
 }

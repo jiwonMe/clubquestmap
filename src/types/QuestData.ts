@@ -13,7 +13,7 @@ export interface Place {
   isNotAccessible: boolean;
 }
 
-interface Building {
+export interface Building {
   buildingId: string;
   name: string;
   location: Location;
