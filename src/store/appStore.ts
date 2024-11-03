@@ -1,22 +1,25 @@
-import { Building } from '@/types/QuestData'
 import { create } from 'zustand'
 import { devtools } from 'zustand/middleware'
 
 // Store의 상태 타입 정의
 interface AppState {
-  selectedBuilding: Building | null
+  questId: string | null
+  selectedBuildingId: string | null
 
   // 액션들
-  setSelectedBuilding: (building: Building | null) => void
+  setSelectedBuildingId: (buildingId: string | null) => void
+  setQuestId: (questId: string | null) => void
 }
 
 // Zustand 스토어 생성
 export const useAppStore = create<AppState>()(
   devtools(
     (set) => ({
-      selectedBuilding: null,
+      questId: null,
+      selectedBuildingId: null,
 
-      setSelectedBuilding: (building: Building | null) => set({ selectedBuilding: building }),
+      setQuestId: (questId: string | null) => set({ questId }),
+      setSelectedBuildingId: (buildingId: string | null) => set({ selectedBuildingId: buildingId }),
     }),
     { name: 'app-store' }
   )

@@ -10,13 +10,39 @@ export const fetchQuestData = async (questId: string) => {
   return data;
 };
 
-export const useQuestData = (questId: string) => {
+export const fetchUpdatePlaceData = async (questId: string, buildingId: string, placeId: string, kind: string, value: boolean) => {
+  // PUT /api/updatePlaceData
+  const response = await fetch(`/api/updatePlaceData`, {
+    method: 'PUT',
+    body: JSON.stringify({ questId, buildingId, placeId, [kind]: value }),
+  });
+  const data = await response.json();
+  console.log(data);
+  return data;
+};
+
+export const useQuestData = (questId: string | null) => {
   const [questData, setQuestData] = useState<QuestData | null>(null);
 
   const loadQuestData = useCallback(async () => {
-    const data = await fetchQuestData(questId);
-    setQuestData(data);
+    if (questId) {
+      const data = await fetchQuestData(questId);
+      setQuestData(data);
+    }
   }, [questId]);
+
+  const updatePlaceData = useCallback(async (buildingId: string, placeId: string, status: string, value: boolean) => {
+    if (questId) {
+      await fetchUpdatePlaceData(questId, buildingId, placeId, status, value);
+      await forceReloadQuestData();
+    }
+  }, [questId]);
+
+  const forceReloadQuestData = useCallback(async () => {
+    if (questId) {
+      loadQuestData();
+    }
+  }, [questId, loadQuestData]);
 
   useEffect(() => {
     loadQuestData();
@@ -24,5 +50,5 @@ export const useQuestData = (questId: string) => {
     return () => clearInterval(interval); // Clean up interval on unmount
   }, [questId, loadQuestData]);
 
-  return questData;
+  return { questData, updatePlaceData, forceReloadQuestData };
 };

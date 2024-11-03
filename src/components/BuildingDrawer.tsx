@@ -10,33 +10,43 @@ import {
 import { Button } from "@/components/ui/button";
 import { Building } from "@/types/QuestData";
 import { FaMapMarkerAlt, FaRegCopy } from "react-icons/fa";
+import { Toaster } from "@/components/ui/toaster";
+import { useToast } from "@/hooks/use-toast";
+import { useQuestData } from "@/hooks/useQuestData";
+import { useAppStore } from "@/store/appStore";
 
 interface BuildingDrawerProps {
   isOpen: boolean;
   onOpenChange: (open: boolean) => void;
-  selectedBuilding: Building | null;
-  setSelectedBuilding: (building: Building | null) => void;
+  selectedBuildingId: string | null;
+  setSelectedBuildingId: (buildingId: string | null) => void;
 }
 
 export default function BuildingDrawer({
   isOpen,
   onOpenChange,
-  selectedBuilding,
-  setSelectedBuilding,
+  selectedBuildingId,
+  setSelectedBuildingId,
 }: BuildingDrawerProps) {
+  
+  const { toast } = useToast();
+  
+  const { questId } = useAppStore();
+  
+  const { updatePlaceData, questData } = useQuestData(questId ?? null);
+
   const handleStatusChange = (placeId: string, status: 'isClosed' | 'isNotAccessible') => {
-    if (selectedBuilding) {
-      const updatedPlaces = selectedBuilding.places.map(place => 
-        place.placeId === placeId ? { ...place, [status]: !place[status] } : place
-      );
-      setSelectedBuilding({ ...selectedBuilding, places: updatedPlaces });
+    if (selectedBuildingId) {
+      setSelectedBuildingId(selectedBuildingId);
+      console.log(selectedBuildingId, placeId, status, questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.places.find(place => place.placeId === placeId)?.[status]);
+      updatePlaceData(selectedBuildingId, placeId, status, !questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.places.find(place => place.placeId === placeId)?.[status]);
     }
   };
 
-  const completedCount = selectedBuilding?.places.filter(
+  const completedCount = questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.places.filter(
     (place) => place.isClosed || place.isNotAccessible || place.isConquered
   ).length || 0;
-  const totalCount = selectedBuilding?.places.length || 0;
+  const totalCount = questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.places.length || 0;
 
   const openNaverMap = (lat: number, lng: number) => {
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -59,7 +69,11 @@ export default function BuildingDrawer({
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      alert('Name copied to clipboard!');
+      toast({
+        title: "Success",
+        description: "Name copied to clipboard!",
+        duration: 500,
+      });
     }).catch(err => {
       console.error('Could not copy text: ', err);
     });
@@ -68,18 +82,19 @@ export default function BuildingDrawer({
   return (
     <Drawer open={isOpen} onOpenChange={(open) => {
       onOpenChange(open);
-      if (!open) setSelectedBuilding(null);
+      if (!open) setSelectedBuildingId(null);
     }}>
       <DrawerContent>
+        <Toaster />
         <DrawerHeader>
           <DrawerTitle>
-            {selectedBuilding?.name}
+            {questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.name}
             <Button
               variant="ghost"
               className="ml-2"
               onClick={() => {
-                if (selectedBuilding) {
-                  const { lat, lng } = selectedBuilding.places[0].location;
+                if (selectedBuildingId && questData) {
+                  const { lat, lng } = questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.places[0].location ?? { lat: 0, lng: 0 };
                   openNaverMap(lat, lng);
                 }
               }}
@@ -95,7 +110,7 @@ export default function BuildingDrawer({
           </DrawerDescription>
         </DrawerHeader>
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
-          {selectedBuilding?.places
+          {questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.places
             .sort((a, b) => {
               // Sort places: incomplete first, completed last
               const aCompleted = a.isConquered || a.isClosed || a.isNotAccessible;
@@ -149,4 +164,4 @@ export default function BuildingDrawer({
       </DrawerContent>
     </Drawer>
   );
-} 
+}

@@ -24,7 +24,7 @@ interface MapComponentProps {
 const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, questData, currentLocation }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
 
-  const { setSelectedBuilding } = useAppStore();
+  const { setSelectedBuildingId } = useAppStore();
 
   useEffect(() => {
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_API_TOKEN || "";
@@ -72,7 +72,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, 
               places: building.places
             }}
             onClick={() => {
-              setSelectedBuilding(building);
+              setSelectedBuildingId(building.buildingId);
             }}
           />
         )))
