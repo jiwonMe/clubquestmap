@@ -8,12 +8,17 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
-import { Building } from "@/types/QuestData";
-import { FaMapMarkerAlt, FaRegCopy } from "react-icons/fa";
-import { Toaster } from "@/components/ui/toaster";
-import { useToast } from "@/hooks/use-toast";
+import { FiCopy } from "react-icons/fi";
 import { useQuestData } from "@/hooks/useQuestData";
 import { useAppStore } from "@/store/appStore";
+import naverMapIcon from "@/assets/images/nmap_logo.webp";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useState } from "react";
 
 interface BuildingDrawerProps {
   isOpen: boolean;
@@ -29,8 +34,6 @@ export default function BuildingDrawer({
   setSelectedBuildingId,
 }: BuildingDrawerProps) {
   
-  const { toast } = useToast();
-  
   const { questId } = useAppStore();
   
   const { updatePlaceData, questData } = useQuestData(questId ?? null);
@@ -38,7 +41,6 @@ export default function BuildingDrawer({
   const handleStatusChange = (placeId: string, status: 'isClosed' | 'isNotAccessible') => {
     if (selectedBuildingId) {
       setSelectedBuildingId(selectedBuildingId);
-      console.log(selectedBuildingId, placeId, status, questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.places.find(place => place.placeId === placeId)?.[status]);
       updatePlaceData(selectedBuildingId, placeId, status, !questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.places.find(place => place.placeId === placeId)?.[status]);
     }
   };
@@ -67,13 +69,12 @@ export default function BuildingDrawer({
     }
   };
 
-  const copyToClipboard = (text: string) => {
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
+
+  const copyToClipboard = (placeId: string, text: string) => {
     navigator.clipboard.writeText(text).then(() => {
-      toast({
-        title: "Success",
-        description: "Name copied to clipboard!",
-        duration: 500,
-      });
+      setShowTooltip(placeId);
+      setTimeout(() => setShowTooltip(null), 1500);
     }).catch(err => {
       console.error('Could not copy text: ', err);
     });
@@ -85,13 +86,12 @@ export default function BuildingDrawer({
       if (!open) setSelectedBuildingId(null);
     }}>
       <DrawerContent>
-        <Toaster />
         <DrawerHeader>
-          <DrawerTitle>
+          <DrawerTitle className="flex justify-center items-center w-full text-center">
             {questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.name}
             <Button
-              variant="ghost"
-              className="ml-2"
+              variant="link"
+              className="ml-2 p-0 size-8"
               onClick={() => {
                 if (selectedBuildingId && questData) {
                   const { lat, lng } = questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.places[0].location ?? { lat: 0, lng: 0 };
@@ -99,7 +99,7 @@ export default function BuildingDrawer({
                 }
               }}
             >
-              <FaMapMarkerAlt />
+              <img src={naverMapIcon.src} alt="네이버 지도" width={20} height={20} className="p-0 m-0 border border-gray-300 rounded-md" tabIndex={0}/>
             </Button>
           </DrawerTitle>
           <DrawerDescription>
@@ -111,12 +111,12 @@ export default function BuildingDrawer({
         </DrawerHeader>
         <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-4" style={{ maxHeight: '60vh', overflowY: 'auto' }}>
           {questData?.buildings.find(building => building.buildingId === selectedBuildingId)?.places
-            .sort((a, b) => {
-              // Sort places: incomplete first, completed last
-              const aCompleted = a.isConquered || a.isClosed || a.isNotAccessible;
-              const bCompleted = b.isConquered || b.isClosed || b.isNotAccessible;
-              return aCompleted === bCompleted ? 0 : aCompleted ? 1 : -1;
-            })
+            // .sort((a, b) => {
+            //   // Sort places: incomplete first, completed last
+            //   const aCompleted = a.isConquered || a.isClosed || a.isNotAccessible;
+            //   const bCompleted = b.isConquered || b.isClosed || b.isNotAccessible;
+            //   return aCompleted === bCompleted ? 0 : aCompleted ? 1 : -1;
+            // })
             .map((place) => {
               const isCompleted = place.isConquered || place.isClosed || place.isNotAccessible;
               return (
@@ -125,13 +125,34 @@ export default function BuildingDrawer({
                   className={`p-3 border rounded-lg ${isCompleted ? 'opacity-50' : ''}`}
                 >
                   <h3 className="font-medium flex items-center">
+                    <TooltipProvider>
+                      <Tooltip open={showTooltip === place.placeId}>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            className="bg-gray-100"
+                            onClick={() => copyToClipboard(place.placeId, place.name)}
+                          >
+                            {place.name}
+                            <FiCopy className="ml-2" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>복사되었습니다</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                     <Button
-                      variant="ghost"
-                      className="bg-gray-100"
-                      onClick={() => copyToClipboard(place.name)}
+                      variant="link"
+                      className="ml-2 p-0"
+                      onClick={() => {
+                        if (selectedBuildingId && questData) {
+                          const { lat, lng } = place.location ?? { lat: 0, lng: 0 };
+                          openNaverMap(lat, lng);
+                        }
+                      }}
                     >
-                      {place.name}
-                      <FaRegCopy />
+                      <img src={naverMapIcon.src} alt="네이버 지도" width={20} height={20} className="p-0 m-0 border border-gray-300 rounded-md" tabIndex={0}/>
                     </Button>
                   </h3>
                   <div className="mt-2 space-y-2">

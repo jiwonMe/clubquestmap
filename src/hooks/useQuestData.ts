@@ -6,7 +6,6 @@ import { QuestData } from '@/types/QuestData';
 export const fetchQuestData = async (questId: string) => {
   const response = await fetch(`/api/getQuestData?questId=${questId}`);
   const data = await response.json();
-  console.log(data);
   return data;
 };
 
@@ -17,7 +16,6 @@ export const fetchUpdatePlaceData = async (questId: string, buildingId: string, 
     body: JSON.stringify({ questId, buildingId, placeId, [kind]: value }),
   });
   const data = await response.json();
-  console.log(data);
   return data;
 };
 

@@ -1,5 +1,7 @@
 "use client"
 import MapboxMapComponent from '@/components/mapbox';
+import dynamic from 'next/dynamic';
+const NMapComponent = dynamic(() => import('@/components/nmap'), { ssr: false });
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import StairCrusherClubLogo from '@/assets/images/SCC_logo.png';
@@ -10,19 +12,22 @@ import { useQuestData } from '@/hooks/useQuestData'; // Import the custom hook
 import BuildingDrawer from '@/components/BuildingDrawer'; // Import the new component
 import { Input } from '@/components/ui/input';
 import { useSearchParams } from 'next/navigation';
-import { FaInfoCircle } from 'react-icons/fa';
+import { FaInfoCircle, FaCog } from 'react-icons/fa'; // Import FaCog for settings icon
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Checkbox } from '@/components/ui/checkbox'; // Import Checkbox component
+import { Suspense } from 'react';
 
-export default function Home() {
-  const searchParams = useSearchParams(); // Initialize useSearchParams
+function HomeContent() {
+  const searchParams = useSearchParams();
 
   const [currentLocation, setCurrentLocation] = useState<[number, number]>([127, 38]);
-  const { selectedBuildingId, setSelectedBuildingId, questId, setQuestId } = useAppStore();
+  const { selectedBuildingId, setSelectedBuildingId, questId, setQuestId, useNaverMap, setUseNaverMap } = useAppStore(); // Add useNaverMap and setUseNaverMap
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [isGuideOpen, setIsGuideOpen] = useState(false); // State for guide dialog
   const [isQuestIdDialogOpen, setIsQuestIdDialogOpen] = useState(searchParams?.get('questId') === null); // State for questId dialog
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false); // State for settings dialog
   const [error, setError] = useState<string | null>(null); // State for error message
 
   const [inputValue, setInputValue] = useState(''); // Add this state
@@ -32,6 +37,9 @@ export default function Home() {
       setCurrentLocation([position.coords.longitude, position.coords.latitude]);
     });
   };
+
+  // Always call the hook, but pass null if no questId
+  const { questData, forceReloadQuestData } = useQuestData(questId ?? null);
 
   useEffect(() => {
     const questIdFromUrl = searchParams?.get('questId') ?? null;
@@ -47,12 +55,17 @@ export default function Home() {
 
   useEffect(() => {
     if (questId) {
+      forceReloadQuestData();
+    }
+  }, [questId, forceReloadQuestData]);
+
+  useEffect(() => {
+    if (questId) {
       setIsDrawerOpen(selectedBuildingId !== null);
     }
   }, [selectedBuildingId, questId]);
 
-  // Always call the hook, but pass null if no questId
-  const { questData } = useQuestData(questId ?? null);
+  
   const totalPlaces = useMemo(() => questData?.buildings.reduce((acc, building) => acc + building.places.length, 0) || 0, [questData]);
   const completedPlaces = useMemo(() => questData?.buildings.reduce((acc, building) => acc + building.places.filter(place => place.isConquered || place.isClosed || place.isNotAccessible).length, 0) || 0, [questData]);
 
@@ -78,6 +91,11 @@ export default function Home() {
     }
   };
 
+  const handleMapToggle = (checked: boolean) => {
+    setUseNaverMap(checked);
+    window.location.reload(); // Refresh the page when the map type is toggled
+  };
+
   return (
     <main className="flex min-h-screen flex-col items-center justify-between relative">
       {questId && (
@@ -87,9 +105,14 @@ export default function Home() {
               <h1 className='text-white font-medium text-sm'>
                 {questData ? `${questData?.name} - ${completedPlaces}/${totalPlaces}` : 'Loading...'}
               </h1>
-              <Button variant="ghost" size="icon" onClick={() => setIsGuideOpen(true)} className='text-white hover:bg-blue-500 hover:text-white bg-transparent'>
-                <FaInfoCircle size={24} />
-              </Button>
+              <div className="flex space-x-2">
+                <Button variant="ghost" size="icon" onClick={() => setIsGuideOpen(true)} className='text-white hover:bg-blue-500 hover:text-white bg-transparent'>
+                  <FaInfoCircle size={24} />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setIsSettingsOpen(true)} className='text-white hover:bg-blue-500 hover:text-white bg-transparent'>
+                  <FaCog size={24} />
+                </Button>
+              </div>
             </div>
             <div className="w-full bg-gray-200 h-2 relative border-b border-gray-800">
               <div className="bg-green-500 h-2 relative border-b border-gray-800" style={{ width: `${progressPercentage}%` }}>
@@ -104,15 +127,30 @@ export default function Home() {
           </div>
           {
             questData && (
-              <MapboxMapComponent
-                centerPosition={{
-                  lng: questData?.buildings[0].location.lng || 127,
-                  lat: questData?.buildings[0].location.lat || 38,
-                }}
-                markerPositions={questData?.buildings.map(building => [building.location.lng, building.location.lat]) || []}
-                questData={questData}
-                currentLocation={currentLocation}
-              />
+              useNaverMap ? (
+                <NMapComponent
+                  zoomLevel={15}
+                  centerPosition={{
+                    lng: questData?.buildings[0].location.lng || 127,
+                    lat: questData?.buildings[0].location.lat || 38,
+                  }}
+                  questData={questData}
+                  currentLocation={{
+                    lng: currentLocation[0],
+                    lat: currentLocation[1],
+                  }}
+                />
+              ) : (
+                <MapboxMapComponent
+                  centerPosition={{
+                    lng: questData?.buildings[0].location.lng || 127,
+                    lat: questData?.buildings[0].location.lat || 38,
+                  }}
+                  markerPositions={questData?.buildings.map(building => [building.location.lng, building.location.lat]) || []}
+                  questData={questData}
+                  currentLocation={currentLocation}
+                />
+              )
             )
           }
 
@@ -135,6 +173,24 @@ export default function Home() {
                     <li>정복이 완료된 건물은 회색으로 표시됩니다.</li>
                     <li>폐업여부는 네이버지도로 확인하면 더 정확합니다.</li>
                   </ul>
+                </DialogDescription>
+              </DialogHeader>
+            </DialogContent>
+          </Dialog>
+
+          {/* Settings Dialog */}
+          <Dialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>설정</DialogTitle>
+                <DialogDescription>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      checked={useNaverMap}
+                      onCheckedChange={handleMapToggle}
+                    />
+                    <span>네이버 지도 사용</span>
+                  </div>
                 </DialogDescription>
               </DialogHeader>
             </DialogContent>
@@ -166,10 +222,18 @@ export default function Home() {
         </div>
       )}
 
-      {/* StairCrusherClub Logo at the bottom right */}
-      <div className="absolute bottom-4 right-4">
+      {/* StairCrusherClub Logo at the bottom left */}
+      <div className="absolute bottom-4 left-4">
         <Image src={StairCrusherClubLogo} alt="StairCrusherClub Logo" width={100} height={100} />
       </div>
     </main>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomeContent />
+    </Suspense>
   );
 }

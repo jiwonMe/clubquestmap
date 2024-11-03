@@ -77,8 +77,6 @@ const updatePlaceData = async (data: UpdatePlaceDataRequest): Promise<Response> 
 
     const mode = Object.keys(data).find(key => key === 'isNotAccessible') ?? 'isClosed';
 
-    console.log(data.questId, mode, data[mode]);
-
     const response = await fetch(`https://api.staircrusher.club/admin/clubQuests/${data.questId}/${mode}`, {
       method: 'PUT',
       headers: {
@@ -90,7 +88,6 @@ const updatePlaceData = async (data: UpdatePlaceDataRequest): Promise<Response> 
         [mode]: data[mode]
       }),
     });
-    console.log(response.status);
     return response;
   } catch (error) {
     console.error(error, data);
@@ -106,8 +103,6 @@ export default async function handler(
     res.status(405).json({ error: 'PUT 메소드만 허용됩니다.' });
     return;
   }
-
-  // console.log(req.body);
 
   const requestBody = JSON.parse(req.body);
 
