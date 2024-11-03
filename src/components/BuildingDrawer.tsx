@@ -71,13 +71,52 @@ export default function BuildingDrawer({
 
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
-  const copyToClipboard = (placeId: string, text: string) => {
-    navigator.clipboard.writeText(text).then(() => {
+  const copyToClipboard = async (placeId: string, text: string) => {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        // 보안 컨텍스트(HTTPS)에서는 Clipboard API 사용
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback: 기존 방식으로 시도
+        const textarea = document.createElement('textarea');
+        textarea.value = text;
+        
+        // iOS에서 필요한 추가 스타일링
+        textarea.style.position = 'absolute';
+        textarea.style.left = '-9999px';
+        textarea.style.top = '0';
+        textarea.setAttribute('readonly', ''); // iOS에서 필요
+        
+        document.body.appendChild(textarea);
+        
+        // iOS에서의 선택을 위한 추가 처리
+        const range = document.createRange();
+        range.selectNodeContents(textarea);
+        
+        const selection = window.getSelection();
+        if (selection) {
+          selection.removeAllRanges();
+          selection.addRange(range);
+          textarea.setSelectionRange(0, textarea.value.length); // iOS를 위한 추가 처리
+        }
+        
+        const successful = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        
+        if (!successful) {
+          throw new Error('복사 실패');
+        }
+      }
+      
+      // 성공 피드백
       setShowTooltip(placeId);
       setTimeout(() => setShowTooltip(null), 1500);
-    }).catch(err => {
-      console.error('Could not copy text: ', err);
-    });
+      
+    } catch (err) {
+      console.error('클립보드 복사 실패:', err);
+      // 사용자에게 실패 알림
+      alert('복사에 실패했습니다. 텍스트를 직접 선택하여 복사해주세요.');
+    }
   };
 
   return (

@@ -58,7 +58,6 @@ const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, 
     <div
       className="w-full flex-grow"
       ref={mapContainer}
-      style={{ width: "100%" }}
     >
       {
         singletonMapInstance && (questData && 

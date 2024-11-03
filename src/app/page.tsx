@@ -97,10 +97,10 @@ function HomeContent() {
   };
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between relative">
+    <main className="flex min-h-full flex-col items-center justify-between relative overflow-hidden bg-blue-600">
       {questId && (
         <>
-          <div className="absolute top-0 left-0 right-0 z-30 w-full">
+          <div className="fixed top-0 left-0 right-0 z-30 w-full">
             <div className="h-12 bg-blue-600 flex items-center px-4 justify-between border-b border-gray-800">
               <h1 className='text-white font-medium text-sm'>
                 {questData ? `${questData?.name} - ${completedPlaces}/${totalPlaces}` : 'Loading...'}
@@ -208,7 +208,7 @@ function HomeContent() {
                 <Input
                   type="text"
                   placeholder="퀘스트 ID 입력"
-                  className="border p-2 w-full text-black mt-2"
+                  className="border p-2 w-full text-black mt-2 text-xl"
                   onBlur={(e) => handleQuestIdSubmit(e.target.value)}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
