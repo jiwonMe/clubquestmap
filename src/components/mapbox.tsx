@@ -1,13 +1,15 @@
 "use client"
 // src/components/MapComponent.tsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import MapBoxLanguage from '@mapbox/mapbox-gl-language';
 import Marker from "./marker";
 
 import 'mapbox-gl/dist/mapbox-gl.css'
-import { QuestData } from "@/types/QuestData";
+import { Building, QuestData } from "@/types/QuestData";
 import CurrentMarker from "./current-marker";
+import { getLeadingNumber } from "@/utils/getLeadingNumber";
+import { useAppStore } from "@/store/appStore";
 
 let singletonMapInstance: mapboxgl.Map | null = null;
 
@@ -21,6 +23,8 @@ interface MapComponentProps {
 
 const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, questData, currentLocation }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
+
+  const { setSelectedBuilding } = useAppStore();
 
   useEffect(() => {
     mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_API_TOKEN || "";
@@ -66,6 +70,9 @@ const MapComponent: React.FC<MapComponentProps> = ({ zoomLevel, centerPosition, 
             metadata={{
               building: building,
               places: building.places
+            }}
+            onClick={() => {
+              setSelectedBuilding(building);
             }}
           />
         )))

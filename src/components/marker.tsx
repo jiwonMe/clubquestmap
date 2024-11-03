@@ -3,8 +3,10 @@
 import React, { useEffect } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { Building, Place } from '@/types/QuestData';
+import { getLeadingNumber } from '@/utils/getLeadingNumber';
+import { cn } from '@/lib/utils';
 
-interface MarkerProps {
+interface MarkerProps extends React.HTMLAttributes<HTMLDivElement> {
   map: mapboxgl.Map;
   position: [number, number];
   metadata?: {
@@ -13,49 +15,44 @@ interface MarkerProps {
   }
 }
 
-const Marker: React.FC<MarkerProps> = ({ map, position, metadata }) => {
+const Marker: React.FC<MarkerProps> = ({ map, position, metadata, ...props }) => {
   const markerRef = React.useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!markerRef.current) return;
-    const el = markerRef.current
+    const el = markerRef.current;
 
-    // Set marker color based on conquest status
-    // Check if all places are conquered and set the marker color accordingly
-    const allPlacesConquered = metadata?.places?.every(place => place.isConquered) ?? false;
-    el.className = allPlacesConquered ? "bg-gray-400 size-4 rounded-full z-0" : "bg-blue-600 size-4 rounded-full z-10";
-
-    el.className = el.className + " text-gray-100 text-center text-xs content-center flex justify-center items-center";
-
-    // const size = (metadata?.places?.length ?? 0) * 10;
-
-    // el.style.width = `${size}px`;
-    // el.style.height = `${size}px`;
+    // Determine marker class based on conquest status
+    const markerClass = getMarkerClass(metadata);
+    el.className = markerClass;
 
     // Add marker to map
-    const marker = new mapboxgl.Marker(el)
-      .setLngLat(position)
-      .addTo(map);
+    const marker = createMapboxMarker(el, position, map);
 
     return () => {
       marker.remove();
     };
   }, [map, position, metadata, markerRef]);
 
-  const getLeadingNumber = (str: string) => {
-    const match = str.match(/\d+/);
-    return match ? match[0] : '';
-  }
-
   return (
-    <div ref={markerRef}
-      onClick={() => {
-        console.log(metadata);
-      }}
-    >
+    <div ref={markerRef} {...props}>
       {getLeadingNumber(metadata?.building.name || '')}
     </div>
-  )
+  );
 };
+
+// Function to determine marker class based on conquest status
+function getMarkerClass(metadata?: { places: Place[] }): string {
+  const allPlacesConquered = metadata?.places?.every(place => place.isConquered || place.isClosed || place.isNotAccessible) ?? false;
+  const conditionClass = allPlacesConquered ? cn("bg-gray-300 z-0 border-gray-600 text-gray-600") : cn("bg-blue-600 z-10 border-gray-800");
+  return cn("size-5 rounded-full text-gray-100 text-center text-xs content-center flex justify-center items-center border font-medium", conditionClass);
+}
+
+// Function to create a Mapbox marker
+function createMapboxMarker(el: HTMLDivElement, position: [number, number], map: mapboxgl.Map) {
+  return new mapboxgl.Marker(el)
+    .setLngLat(position)
+    .addTo(map);
+}
 
 export default Marker;
