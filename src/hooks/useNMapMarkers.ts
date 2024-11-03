@@ -10,7 +10,7 @@ interface MarkerMetadata {
 
 interface UseNMapMarkersProps {
   map: naver.maps.Map | null;
-  questData: QuestData;
+  questData: QuestData | null;
   markerTemplate: (metadata: MarkerMetadata) => {
     innerHTML: string;
     onClick: () => void;
@@ -18,6 +18,7 @@ interface UseNMapMarkersProps {
 }
 
 export function useNMapMarkers({ map, questData, markerTemplate }: UseNMapMarkersProps) {
+
   const markersRef = useRef<naver.maps.Marker[]>([]);
 
   useEffect(() => {

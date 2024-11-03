@@ -52,9 +52,8 @@ const MapComponent: React.FC<MapComponentProps> = ({
     });
   }, []);
 
-  if (!questData) return null;
   // Use custom hook to manage markers
-  useNMapMarkers({ map: mapInstance.current, questData, markerTemplate: (metadata) => {
+  useNMapMarkers({ map: mapInstance.current, questData: questData ?? null, markerTemplate: (metadata) => {
     const buildingName = metadata.building?.name || '';
     const leadingNumber = getLeadingNumber(buildingName);
 
