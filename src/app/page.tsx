@@ -85,6 +85,7 @@ function HomeContent() {
       setError(null);
       // set params
       window.history.replaceState({}, '', `/?questId=${uuid}`);
+      window.location.reload(); // Refresh the page when the questId is changed
     } else {
       setIsQuestIdDialogOpen(true);
       setError("잘못된 퀘스트 ID입니다. 다시 입력해주세요.");
