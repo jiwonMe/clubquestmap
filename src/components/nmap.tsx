@@ -5,6 +5,7 @@ import { useNMapMarkers } from '@/hooks/useNMapMarkers';
 import { Building, Place, QuestData } from '@/types/QuestData';
 import { getLeadingNumber } from '@/utils/getLeadingNumber';
 import { useAppStore } from '@/store/appStore';
+import { useNMapCurrentMarker } from '@/hooks/useNMapCurrentMarker';
 
 interface MapComponentProps {
   zoomLevel: number;
@@ -53,11 +54,23 @@ const MapComponent: React.FC<MapComponentProps> = ({
   }, []);
 
   // Use custom hook to manage markers
-  useNMapMarkers({ map: mapInstance.current, questData: questData ?? null, markerTemplate: (metadata) => {
+  useNMapMarkers({ map: mapInstance.current, questData: questData ? {
+    ...questData,
+    buildings: [...questData.buildings, {
+      buildingId: 'current',
+      name: '현재 위치',
+      places: [],
+      location: {
+        lat: currentLocation?.lat ?? 0,
+        lng: currentLocation?.lng ?? 0
+      }
+    }]
+  } : null, markerTemplate: (metadata) => {
     const buildingName = metadata.building?.name || '';
     const leadingNumber = getLeadingNumber(buildingName);
 
     const onClick = () => {
+      if (metadata.building?.buildingId === 'current') return;
       setSelectedBuildingId(metadata.building?.buildingId || '');
     }
 
@@ -66,6 +79,13 @@ const MapComponent: React.FC<MapComponentProps> = ({
       onClick: onClick
     };
   } });
+
+  useNMapCurrentMarker({ 
+    map: mapInstance.current, 
+    position: currentLocation 
+      ? [currentLocation.lat, currentLocation.lng] 
+      : [0, 0] 
+  });
 
   return (
     <div 

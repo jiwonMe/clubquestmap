@@ -22,7 +22,9 @@ export const useAppStore = create<AppState>()(
         selectedBuildingId: null,
         useNaverMap: false,
 
-        setQuestId: (questId: string | null) => set({ questId }),
+        setQuestId: (questId: string | null) => {
+          set({ questId, selectedBuildingId: null });
+        },
         setSelectedBuildingId: (buildingId: string | null) => set({ selectedBuildingId: buildingId }),
         setUseNaverMap: (useNaverMap: boolean) => set({ useNaverMap }),
       }),

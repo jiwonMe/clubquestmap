@@ -30,7 +30,6 @@ export function useNMapMarkers({ map, questData, markerTemplate }: UseNMapMarker
     questData.buildings.forEach(building => {
       const el = document.createElement('div');
 
-      console.log(building);
 
       el.innerHTML = markerTemplate({ building }).innerHTML;
       el.className = cn(getMarkerClass(building), `building-marker`);
@@ -59,10 +58,10 @@ export function useNMapMarkers({ map, questData, markerTemplate }: UseNMapMarker
 }
 
 // Function to determine marker class based on conquest status
-function getMarkerClass(metadata: MarkerMetadata): string {
-  if (!metadata.places) return cn("size-5 rounded-full text-gray-100 text-center text-xs content-center flex justify-center items-center border font-medium bg-red-600 z-10 border-gray-800");
+function getMarkerClass(building: Building): string {
+  if (!building.places || building.places.length === 0 ) return cn("size-3 rounded-full text-gray-100 text-center text-xs content-center flex justify-center items-center border font-medium bg-red-600 z-10 ring-2 ring-red-600 ring-offset-2");
 
-  const allPlacesConquered = metadata.places?.every(place => place.isConquered || place.isClosed || place.isNotAccessible) ?? false;
+  const allPlacesConquered = building.places?.every(place => place.isConquered || place.isClosed || place.isNotAccessible) ?? false;
   const conditionClass = allPlacesConquered ? cn("bg-gray-300 z-0 border-gray-600 text-gray-600") : cn("bg-blue-600 z-10 border-gray-800");
   return cn("size-5 rounded-full text-gray-100 text-center text-xs content-center flex justify-center items-center border font-medium", conditionClass);
 }
