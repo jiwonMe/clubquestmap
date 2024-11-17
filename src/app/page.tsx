@@ -35,6 +35,12 @@ function HomeContent() {
   const getCurrentLocation = () => {
     navigator.geolocation.getCurrentPosition((position) => {
       setCurrentLocation([position.coords.longitude, position.coords.latitude]);
+    }, (error) => {
+      console.error('Error getting current location:', error);
+    },{
+      enableHighAccuracy: true,
+      timeout: 5000,
+      maximumAge: 0
     });
   };
 
@@ -49,7 +55,7 @@ function HomeContent() {
   useEffect(() => {
     if (questId) {
       getCurrentLocation();
-      setInterval(getCurrentLocation, 5000);
+      setInterval(getCurrentLocation, 1000);
     }
   }, [questId]);
 
