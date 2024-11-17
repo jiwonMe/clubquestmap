@@ -16,7 +16,7 @@ interface AppState {
 // Zustand 스토어 생성
 export const useAppStore = create<AppState>()(
   devtools(
-    // persist(
+    persist(
       (set) => ({
         questId: null,
         selectedBuildingId: null,
@@ -28,9 +28,14 @@ export const useAppStore = create<AppState>()(
         setSelectedBuildingId: (buildingId: string | null) => set({ selectedBuildingId: buildingId }),
         setUseNaverMap: (useNaverMap: boolean) => set({ useNaverMap }),
       }),
-      // {
-      //   name: 'app-store', // localStorage에 저장될 이름
-      // }
-    // )
+      {
+        name: 'app-store', // localStorage에 저장될 이름
+        partialize: (state) => ({
+          // questId: state.questId,
+          // selectedBuildingId: state.selectedBuildingId,
+          useNaverMap: state.useNaverMap
+        })
+      }
+    )
   )
 )
