@@ -26,7 +26,7 @@ function HomeContent() {
   const { selectedBuildingId, setSelectedBuildingId, questId, setQuestId, useNaverMap, setUseNaverMap } = useAppStore(); // Add useNaverMap and setUseNaverMap
 
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-  const [isGuideOpen, setIsGuideOpen] = useState(false); // State for guide dialog
+  const [isGuideOpen, setIsGuideOpen] = useState(true); // State for guide dialog
   const [isQuestIdDialogOpen, setIsQuestIdDialogOpen] = useState(searchParams?.get('questId') === null); // State for questId dialog
   const [isSettingsOpen, setIsSettingsOpen] = useState(false); // State for settings dialog
   const [error, setError] = useState<string | null>(null); // State for error message
@@ -125,17 +125,17 @@ function HomeContent() {
               </div>
             </div>
             <div className="w-full bg-gray-200 h-2 relative border-b border-gray-800">
-              <div className="bg-green-500 h-2 relative border-b border-gray-800" style={{ width: `${progressPercentage}%` }}>
+              <div className="bg-green-500 h-2 absolute border-b border-gray-800" style={{ width: `${progressPercentage}%` }}>
                 <div className={cn(
                               "absolute -bottom-10 text-gray-800 text-xs pr-2 bg-white rounded-full px-2 py-1 border-2 border-gray-800 font-medium",
-                              progressPercentage > 0.1 ? 'right-0 rounded-tr-none' : 'left-2 rounded-tl-none'
+                              progressPercentage > 10 ? 'right-0 rounded-tr-none' : 'left-2 rounded-tl-none'
                             )}>
                   {`${progressPercentage.toFixed(1)}%`} {/* Display progress percentage */}
                 </div>
               </div>
               <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/4 w-6 h-6"
                 style={{
-                  left: progressPercentage > 0.1 ? `${progressPercentage * 100}%` : 'auto'
+                  left: progressPercentage > 10 ? `${progressPercentage}%` : 'auto'
                 }}
               >
                 <Image src={BuggieIcon} alt="버기 아이콘" width={24} height={24} />
