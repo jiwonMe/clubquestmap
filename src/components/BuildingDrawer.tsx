@@ -20,7 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface BuildingDrawerProps {
   isOpen: boolean;
@@ -38,9 +38,16 @@ export default function BuildingDrawer({
   
   const { questId } = useAppStore();
   
-  const { updatePlaceData, questData: {
-    [questId as string]: questData
-  } } = useQuestData(questId ?? null);
+  
+
+  const { updatePlaceData, questData: $questData} = useQuestData(questId ?? null);
+
+  const questData = $questData?.[questId as string];
+
+  useEffect(() => {
+    console.log(questId);
+    console.log($questData);
+  }, [questId, $questData]);
 
   const handleStatusChange = (placeId: string, status: 'isClosed' | 'isNotAccessible') => {
     if (selectedBuildingId) {

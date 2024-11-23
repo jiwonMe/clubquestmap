@@ -17,6 +17,8 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox'; // Import Checkbox component
 import { Suspense } from 'react';
+import Lottie from 'lottie-react';
+
 import { cn } from '@/lib/utils';
 
 function HomeContent() {
@@ -75,11 +77,26 @@ function HomeContent() {
   }, [selectedBuildingId, questId]);
 
   
+
+  const [showFireworks, setShowFireworks] = useState(false);
+
+  
+  
   const totalPlaces = useMemo(() => questData?.buildings.reduce((acc, building) => acc + building.places.length, 0) || 0, [questData]);
   const completedPlaces = useMemo(() => questData?.buildings.reduce((acc, building) => acc + building.places.filter(place => place.isConquered || place.isClosed || place.isNotAccessible).length, 0) || 0, [questData]);
 
   // Calculate progress percentage
   const progressPercentage = useMemo(() => totalPlaces ? (completedPlaces / totalPlaces) * 100 : 0, [totalPlaces, completedPlaces]);
+
+  useEffect(() => {
+    if (progressPercentage === 100) {
+      setShowFireworks(true);
+      const timer = setTimeout(() => {
+        setShowFireworks(false);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [progressPercentage]);
 
   const handleQuestIdSubmit = (id: string) => {
     // Extract UUID using regex
@@ -108,6 +125,24 @@ function HomeContent() {
 
   return (
     <main className="flex min-h-full flex-col items-center justify-between relative overflow-hidden bg-blue-600">
+      {showFireworks && (
+        <div className={cn(
+          "fixed inset-0 z-50 pointer-events-none",
+          "flex items-center justify-center"
+        )}>
+          <Lottie
+            animationData={require('/public/congrats.json')}
+            loop={true}
+            style={{
+              width: '100%',
+              height: '100%',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+            }}
+          />
+        </div>
+      )}
       {questId && (
         <>
           <div className="fixed top-0 left-0 right-0 z-30 w-full">

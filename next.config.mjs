@@ -11,6 +11,19 @@ const nextConfig = {
       test: /\.svg$/,
       use: ['@svgr/webpack']
     });
+    config.module.rules.push({
+      test: /\.lottie$/,
+      use: [
+        {
+          loader: 'file-loader',
+          options: {
+            name: '[name].[ext]',
+            outputPath: 'assets/lottie/',
+          },
+        },
+      ],
+    },);
+
     return config;
   }
 }

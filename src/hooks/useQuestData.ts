@@ -76,6 +76,10 @@ export const useQuestData = (questId: string | string[] | null) => {
   //   return () => clearInterval(interval);
   // }, [questId]);
 
+  useEffect(() => {
+    loadQuestData();
+  }, [questId]);
+
   return { 
     questData, 
     updatePlaceData: isFirstLoad.current ? updatePlaceData : debouncedUpdatePlaceData,
