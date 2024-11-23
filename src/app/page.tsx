@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox'; // Import Checkbox component
 import { Suspense } from 'react';
+import { cn } from '@/lib/utils';
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -45,7 +46,9 @@ function HomeContent() {
   };
 
   // Always call the hook, but pass null if no questId
-  const { questData, forceReloadQuestData } = useQuestData(questId ?? null);
+  const { questData: {
+    [questId as string]: questData
+  }, updatePlaceData, loadQuestData } = useQuestData(questId ?? null);
 
   useEffect(() => {
     const questIdFromUrl = searchParams?.get('questId') ?? null;
@@ -61,9 +64,9 @@ function HomeContent() {
 
   useEffect(() => {
     if (questId) {
-      forceReloadQuestData();
+      loadQuestData();
     }
-  }, [questId, forceReloadQuestData]);
+  }, [questId, loadQuestData]);
 
   useEffect(() => {
     if (questId) {
@@ -123,12 +126,19 @@ function HomeContent() {
             </div>
             <div className="w-full bg-gray-200 h-2 relative border-b border-gray-800">
               <div className="bg-green-500 h-2 relative border-b border-gray-800" style={{ width: `${progressPercentage}%` }}>
-                <div className="absolute -right-0 -bottom-10 text-gray-800 text-xs pr-2 bg-white rounded-full px-2 py-1 border-2 border-gray-800 font-medium rounded-tr-none">
+                <div className={cn(
+                              "absolute -bottom-10 text-gray-800 text-xs pr-2 bg-white rounded-full px-2 py-1 border-2 border-gray-800 font-medium",
+                              progressPercentage > 0.1 ? 'right-0 rounded-tr-none' : 'left-2 rounded-tl-none'
+                            )}>
                   {`${progressPercentage.toFixed(1)}%`} {/* Display progress percentage */}
                 </div>
-                <div className="absolute -right-4 top-1/2 -translate-y-1/2">
-                  <Image src={BuggieIcon} alt="버기 아이콘" width={24} height={24} />
-                </div>
+              </div>
+              <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/4 w-6 h-6"
+                style={{
+                  left: progressPercentage > 0.1 ? `${progressPercentage * 100}%` : 'auto'
+                }}
+              >
+                <Image src={BuggieIcon} alt="버기 아이콘" width={24} height={24} />
               </div>
             </div>
           </div>

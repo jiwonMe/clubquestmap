@@ -1,6 +1,7 @@
 // src/hooks/useQuestData.ts
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { QuestData } from '@/types/QuestData';
+import { debounce } from '@/lib/utils';
 
 // src/utils/getQuestData.ts
 export const fetchQuestData = async (questId: string) => {
@@ -19,34 +20,66 @@ export const fetchUpdatePlaceData = async (questId: string, buildingId: string, 
   return data;
 };
 
-export const useQuestData = (questId: string | null) => {
-  const [questData, setQuestData] = useState<QuestData | null>(null);
-
-  const loadQuestData = useCallback(async () => {
+export const useQuestData = (questId: string | string[] | null) => {
+  const [questData, setQuestData] = useState<Record<string, QuestData | null>>({});
+  const isFirstLoad = useRef(true);
+  
+  // 즉시 실행되는 기본 함수
+  const loadQuestData = async () => {
     if (questId) {
-      const data = await fetchQuestData(questId);
-      setQuestData(data);
-    }
-  }, [questId]);
+      const questIds = Array.isArray(questId) ? questId : [questId];
+      const dataPromises = questIds.map(id => fetchQuestData(id));
+      const dataResults = await Promise.all(dataPromises);
 
-  const updatePlaceData = useCallback(async (buildingId: string, placeId: string, status: string, value: boolean) => {
+      const dataMap = questIds.reduce((acc, id, index) => {
+        acc[id] = dataResults[index];
+        return acc;
+      }, {} as Record<string, QuestData | null>);
+      setQuestData(dataMap);
+    }
+  };
+
+  // debounced 버전의 함수들
+  const debouncedLoadQuestData = useRef(
+    debounce(async () => {
+      await loadQuestData();
+    }, 2000)
+  ).current;
+
+  // 조건부로 즉시 실행 또는 debounce된 함수를 호출하는 래퍼 함수
+  const handleLoadQuestData = async () => {
+    if (isFirstLoad.current) {
+      isFirstLoad.current = false;
+      await loadQuestData();
+    } else {
+      await debouncedLoadQuestData();
+    }
+  };
+
+  const updatePlaceData = async (buildingId: string, placeId: string, status: string, value: boolean) => {
     if (questId) {
-      await fetchUpdatePlaceData(questId, buildingId, placeId, status, value);
-      await forceReloadQuestData();
+      const questIds = Array.isArray(questId) ? questId : [questId];
+      await Promise.all(questIds.map(id => 
+        fetchUpdatePlaceData(id, buildingId, placeId, status, value)
+      ));
+      await handleLoadQuestData();
     }
-  }, [questId]);
+  };
 
-  const forceReloadQuestData = useCallback(async () => {
-    if (questId) {
-      loadQuestData();
-    }
-  }, [questId, loadQuestData]);
+  const debouncedUpdatePlaceData = useRef(
+    debounce(updatePlaceData, 2000)
+  ).current;
 
-  useEffect(() => {
-    loadQuestData();
-    const interval = setInterval(loadQuestData, 5000);
-    return () => clearInterval(interval); // Clean up interval on unmount
-  }, [questId, loadQuestData]);
+  // useEffect(() => {
+  //   handleLoadQuestData();
+  //   const interval = setInterval(handleLoadQuestData, 5000);
+  //   return () => clearInterval(interval);
+  // }, [questId]);
 
-  return { questData, updatePlaceData, forceReloadQuestData };
+  return { 
+    questData, 
+    updatePlaceData: isFirstLoad.current ? updatePlaceData : debouncedUpdatePlaceData,
+    loadQuestData: handleLoadQuestData,
+    isLoading: questId !== null && questData[questId as string] === null 
+  };
 };

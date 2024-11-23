@@ -38,7 +38,9 @@ export default function BuildingDrawer({
   
   const { questId } = useAppStore();
   
-  const { updatePlaceData, questData } = useQuestData(questId ?? null);
+  const { updatePlaceData, questData: {
+    [questId as string]: questData
+  } } = useQuestData(questId ?? null);
 
   const handleStatusChange = (placeId: string, status: 'isClosed' | 'isNotAccessible') => {
     if (selectedBuildingId) {
