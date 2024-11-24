@@ -80,6 +80,13 @@ function HomeContent() {
   }, [questId]);
 
   useEffect(() => {
+    const interval = setInterval(() => {
+      loadQuestData();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [questData]);
+
+  useEffect(() => {
     if (questId) {
       setIsDrawerOpen(selectedBuildingId !== null);
     }
