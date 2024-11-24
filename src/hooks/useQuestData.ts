@@ -1,7 +1,6 @@
 // src/hooks/useQuestData.ts
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { QuestData } from '@/types/QuestData';
-import { debounce } from '@/lib/utils';
 
 // src/utils/getQuestData.ts
 export const fetchQuestData = async (questId: string) => {
@@ -23,7 +22,7 @@ export const fetchUpdatePlaceData = async (questId: string, buildingId: string, 
 export const useQuestData = (questId: string | string[] | null) => {
   const [questData, setQuestData] = useState<Record<string, QuestData | null>>({});
   const isFirstLoad = useRef(true);
-  
+
   // 즉시 실행되는 기본 함수
   const loadQuestData = async () => {
     if (questId) {
@@ -35,25 +34,18 @@ export const useQuestData = (questId: string | string[] | null) => {
         acc[id] = dataResults[index];
         return acc;
       }, {} as Record<string, QuestData | null>);
+
+      console.log('Loaded quest data:', dataMap); // Debugging: Log loaded data
       setQuestData(dataMap);
     }
   };
 
-  // debounced 버전의 함수들
-  const debouncedLoadQuestData = useRef(
-    debounce(async () => {
-      await loadQuestData();
-    }, 2000)
-  ).current;
-
-  // 조건부로 즉시 실행 또는 debounce된 함수를 호출하는 래퍼 함수
+  // 조건부로 즉시 실행 함수를 호출하는 래퍼 함수
   const handleLoadQuestData = async () => {
     if (isFirstLoad.current) {
       isFirstLoad.current = false;
-      await loadQuestData();
-    } else {
-      await debouncedLoadQuestData();
     }
+    await loadQuestData();
   };
 
   const updatePlaceData = async (buildingId: string, placeId: string, status: string, value: boolean) => {
@@ -65,10 +57,6 @@ export const useQuestData = (questId: string | string[] | null) => {
       await handleLoadQuestData();
     }
   };
-
-  const debouncedUpdatePlaceData = useRef(
-    debounce(updatePlaceData, 2000)
-  ).current;
 
   // useEffect(() => {
   //   handleLoadQuestData();
@@ -82,7 +70,7 @@ export const useQuestData = (questId: string | string[] | null) => {
 
   return { 
     questData, 
-    updatePlaceData: isFirstLoad.current ? updatePlaceData : debouncedUpdatePlaceData,
+    updatePlaceData,
     loadQuestData: handleLoadQuestData,
     isLoading: questId !== null && questData[questId as string] === null 
   };

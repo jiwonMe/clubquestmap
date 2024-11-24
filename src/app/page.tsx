@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { useSearchParams } from 'next/navigation';
 import { FaInfoCircle, FaCog } from 'react-icons/fa'; // Import FaCog for settings icon
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Checkbox } from '@/components/ui/checkbox'; // Import Checkbox component
 import { Suspense } from 'react';
 import Lottie from 'lottie-react';
@@ -35,6 +35,16 @@ function HomeContent() {
 
   const [inputValue, setInputValue] = useState(''); // Add this state
 
+  const [showSurveyDialog, setShowSurveyDialog] = useState(false);
+  
+  // 설문 완료 여부를 localStorage에 저장
+  const [hasSurveyCompleted, setHasSurveyCompleted] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('surveyCompleted') === 'true';
+    }
+    return false;
+  });
+
   const getCurrentLocation = () => {
     navigator.geolocation.getCurrentPosition((position) => {
       setCurrentLocation([position.coords.longitude, position.coords.latitude]);
@@ -48,9 +58,8 @@ function HomeContent() {
   };
 
   // Always call the hook, but pass null if no questId
-  const { questData: {
-    [questId as string]: questData
-  }, updatePlaceData, loadQuestData } = useQuestData(questId ?? null);
+  const { questData: allQuestData, loadQuestData } = useQuestData(questId ?? null);
+  const questData = useMemo(() => allQuestData?.[questId as string], [allQuestData, questId]);
 
   useEffect(() => {
     const questIdFromUrl = searchParams?.get('questId') ?? null;
@@ -68,7 +77,7 @@ function HomeContent() {
     if (questId) {
       loadQuestData();
     }
-  }, [questId, loadQuestData]);
+  }, [questId]);
 
   useEffect(() => {
     if (questId) {
@@ -76,17 +85,20 @@ function HomeContent() {
     }
   }, [selectedBuildingId, questId]);
 
-  
-
   const [showFireworks, setShowFireworks] = useState(false);
 
-  
-  
   const totalPlaces = useMemo(() => questData?.buildings.reduce((acc, building) => acc + building.places.length, 0) || 0, [questData]);
+  
   const completedPlaces = useMemo(() => questData?.buildings.reduce((acc, building) => acc + building.places.filter(place => place.isConquered || place.isClosed || place.isNotAccessible).length, 0) || 0, [questData]);
 
   // Calculate progress percentage
-  const progressPercentage = useMemo(() => totalPlaces ? (completedPlaces / totalPlaces) * 100 : 0, [totalPlaces, completedPlaces]);
+  const progressPercentage = useMemo(() => totalPlaces ? (completedPlaces / totalPlaces) * 100 : 0, [totalPlaces, completedPlaces, questData]);
+
+  useEffect(() => {
+    console.log(questData);
+    console.log(progressPercentage);
+  }, [progressPercentage, questData]);
+  
 
   useEffect(() => {
     if (progressPercentage === 100) {
@@ -121,6 +133,46 @@ function HomeContent() {
   const handleMapToggle = (checked: boolean) => {
     setUseNaverMap(checked);
     window.location.reload(); // Refresh the page when the map type is toggled
+  };
+
+  // 시작 시간을 저장
+  useEffect(() => {
+    if (questId && !localStorage.getItem('questStartTime')) {
+      localStorage.setItem('questStartTime', new Date().toISOString());
+    }
+  }, [questId]);
+
+  // 시간 체크 (11시 40분, KST)
+  useEffect(() => {
+    if (!questId) return;
+
+    const startTime = localStorage.getItem('questStartTime');
+    // if (startTime) {
+    //   // const timeDiff = new Date().getTime() - new Date(startTime).getTime();
+    //   // const minutesPassed = Math.floor(timeDiff / (1000 * 60));
+      
+      if (
+        (new Date().getHours() === 11 &&
+        new Date().getMinutes() >= 45) ||
+        (new Date().getHours() === 12 &&
+        new Date().getMinutes() <= 30)
+      ) {
+        setShowSurveyDialog(true);
+      }
+    // }
+  }, [questId, hasSurveyCompleted]);
+
+  // progress 100% 체크
+  useEffect(() => {
+    if (!hasSurveyCompleted && progressPercentage === 100) {
+      setShowSurveyDialog(true);
+    }
+  }, [progressPercentage, hasSurveyCompleted]);
+
+  const handleSurveyComplete = () => {
+    localStorage.setItem('surveyCompleted', 'true');
+    setHasSurveyCompleted(true);
+    setShowSurveyDialog(false);
   };
 
   return (
@@ -223,6 +275,7 @@ function HomeContent() {
                     <li>건물 마커를 클릭해 남은 장소를 확인하세요.</li>
                     <li>앱에서 정복 완료시, 정복란이 자동으로 체크됩니다.</li>
                     <li>정복이 완료된 건물은 회색으로 표시됩니다.</li>
+                    <li>접근불가 또는 폐업 건물은 <b>[접근 불가 🚫]</b> 또는 <b>[폐업 🏚️]</b> 버튼을 눌러 상태를 변경할 수 있습니다.</li>
                     <li>폐업여부는 네이버지도로 확인하면 더 정확합니다.</li>
                   </ul>
                 </DialogDescription>
@@ -278,6 +331,33 @@ function HomeContent() {
       <div className="absolute bottom-4 left-4">
         <Image src={StairCrusherClubLogo} alt="StairCrusherClub Logo" width={100} height={100} />
       </div>
+
+      {/* Survey Dialog */}
+      <Dialog open={showSurveyDialog} onOpenChange={setShowSurveyDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>이제 처음 장소로 모여주세요!</DialogTitle>
+            <DialogDescription className="space-y-4">
+              <p>
+                여러분의 후기는 계뿌클의 발전의 소중한 재료입니다. 아래 링크를 통해 돌아오시는 3분만 시간 내 참여해주세요 🥹
+              </p>
+              <div className="flex flex-col space-y-2">
+                <Button 
+                  onClick={() => window.open('https://forms.gle/UyTQxdYEa1EcweNx6', '_blank')}
+                  className="w-full"
+                >
+                  설문조사 참여하기
+                </Button>
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={handleSurveyComplete}>
+              다음에 하기
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }
