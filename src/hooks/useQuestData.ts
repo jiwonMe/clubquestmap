@@ -23,7 +23,7 @@ export const useQuestData = (questId: string | string[] | null) => {
   const [questData, setQuestData] = useState<Record<string, QuestData | null>>({});
   const isFirstLoad = useRef(true);
 
-  // 즉시 실행되는 기본 함수
+  // Immediately invoked function to load quest data
   const loadQuestData = async () => {
     if (questId) {
       const questIds = Array.isArray(questId) ? questId : [questId];
@@ -40,7 +40,7 @@ export const useQuestData = (questId: string | string[] | null) => {
     }
   };
 
-  // 조건부로 즉시 실행 함수를 호출하는 래퍼 함수
+  // Wrapper function to conditionally invoke the load function
   const handleLoadQuestData = async () => {
     if (isFirstLoad.current) {
       isFirstLoad.current = false;
@@ -58,14 +58,8 @@ export const useQuestData = (questId: string | string[] | null) => {
     }
   };
 
-  // useEffect(() => {
-  //   handleLoadQuestData();
-  //   const interval = setInterval(handleLoadQuestData, 5000);
-  //   return () => clearInterval(interval);
-  // }, [questId]);
-
   useEffect(() => {
-    loadQuestData();
+    handleLoadQuestData();
   }, [questId]);
 
   return { 
