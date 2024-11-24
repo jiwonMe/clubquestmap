@@ -160,7 +160,7 @@ function HomeContent() {
       
       if (
         (new Date().getHours() === 11 &&
-        new Date().getMinutes() >= 45) ||
+        new Date().getMinutes() >= 35) ||
         (new Date().getHours() === 12 &&
         new Date().getMinutes() <= 30)
       ) {
